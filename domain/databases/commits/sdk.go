@@ -28,3 +28,8 @@ type Commit interface {
 	HasParent() bool
 	Parent() hash.Hash
 }
+
+// Repository represents a commit repository
+type Repository interface {
+	Retrieve(hash hash.Hash) (Commit, error)
+}

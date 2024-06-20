@@ -2,19 +2,19 @@ package chunks
 
 import "github.com/steve-care-software/historydb/domain/hash"
 
-// NewChunkBuilder creates a new chunk builder
-func NewChunkBuilder() ChunkBuilder {
+// NewBuilder creates a new chunk builder
+func NewBuilder() Builder {
 	hashAdapter := hash.NewAdapter()
-	return createChunkBuilder(
+	return createBuilder(
 		hashAdapter,
 	)
 }
 
-// ChunkBuilder represents the chunk builder
-type ChunkBuilder interface {
-	Create() ChunkBuilder
-	WithPath(path []string) ChunkBuilder
-	WithFingerPrint(fingerPrint hash.Hash) ChunkBuilder
+// Builder represents the chunk builder
+type Builder interface {
+	Create() Builder
+	WithPath(path []string) Builder
+	WithFingerPrint(fingerPrint hash.Hash) Builder
 	Now() (Chunk, error)
 }
 

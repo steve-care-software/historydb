@@ -6,9 +6,9 @@ import (
 	"github.com/steve-care-software/historydb/domain/hash"
 )
 
-func TestChunkBuilder(t *testing.T) {
+func TestBuilder(t *testing.T) {
 	hashAdapter := hash.NewAdapter()
-	chunkBuilder := createChunkBuilder(hashAdapter)
+	chunkBuilder := createBuilder(hashAdapter)
 
 	fingerPrint, err := hashAdapter.FromBytes([]byte("This is some bytes"))
 	if err != nil {

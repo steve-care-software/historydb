@@ -17,7 +17,7 @@ func TestExecutionBuilder(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	chunkBuilder := chunks.NewChunkBuilder()
+	chunkBuilder := chunks.NewBuilder()
 	chunk, err := chunkBuilder.WithPath([]string{"path", "to", "file"}).WithFingerPrint(*fingerPrint).Now()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)

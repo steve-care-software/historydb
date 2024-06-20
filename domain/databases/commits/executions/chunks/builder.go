@@ -7,16 +7,16 @@ import (
 	"github.com/steve-care-software/historydb/domain/hash"
 )
 
-type chunkBuilder struct {
+type builder struct {
 	hashAdapter hash.Adapter
 	path        []string
 	fingerPrint hash.Hash
 }
 
-func createChunkBuilder(
+func createBuilder(
 	hashAdapter hash.Adapter,
-) ChunkBuilder {
-	return &chunkBuilder{
+) Builder {
+	return &builder{
 		hashAdapter: hashAdapter,
 		path:        nil,
 		fingerPrint: nil,
@@ -24,26 +24,26 @@ func createChunkBuilder(
 }
 
 // Create initializes the builder
-func (app *chunkBuilder) Create() ChunkBuilder {
-	return createChunkBuilder(
+func (app *builder) Create() Builder {
+	return createBuilder(
 		app.hashAdapter,
 	)
 }
 
 // WithPath adds a path to the buiolder
-func (app *chunkBuilder) WithPath(path []string) ChunkBuilder {
+func (app *builder) WithPath(path []string) Builder {
 	app.path = path
 	return app
 }
 
 // WithFingerPrint adds a fingerprint to the builder
-func (app *chunkBuilder) WithFingerPrint(fingerPrint hash.Hash) ChunkBuilder {
+func (app *builder) WithFingerPrint(fingerPrint hash.Hash) Builder {
 	app.fingerPrint = fingerPrint
 	return app
 }
 
 // Now builds a new Chunk instance
-func (app *chunkBuilder) Now() (Chunk, error) {
+func (app *builder) Now() (Chunk, error) {
 	if app.path != nil && len(app.path) <= 0 {
 		app.path = nil
 	}
