@@ -21,7 +21,7 @@ func TestChunkBuilder(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if chunk.FingerPrint().Compare(*fingerPrint) {
+	if !chunk.FingerPrint().Compare(*fingerPrint) {
 		t.Errorf("Expected fingerprint %v, got %v", *fingerPrint, chunk.FingerPrint())
 	}
 

@@ -20,14 +20,17 @@ func createChunk(
 	}
 }
 
+// Hash returns the hash
 func (obj *chunk) Hash() hash.Hash {
 	return obj.hash
 }
 
+// Path returns the path
 func (obj *chunk) Path() []string {
 	return obj.path
 }
 
+// FingerPrint returns the fingerprint
 func (obj *chunk) FingerPrint() hash.Hash {
 	return obj.fingerPrint
 }

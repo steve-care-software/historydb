@@ -36,6 +36,7 @@ func (app *chunkBuilder) WithPath(path []string) ChunkBuilder {
 	return app
 }
 
+// WithFingerPrint adds a fingerprint to the builder
 func (app *chunkBuilder) WithFingerPrint(fingerPrint hash.Hash) ChunkBuilder {
 	app.fingerPrint = fingerPrint
 	return app
