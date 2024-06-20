@@ -7,8 +7,6 @@ Package names should always be written in camelcase.
 # Base package.
     The project should always contains packages named: applications, domain and infrastructure at its root.
 
-    The domain objects should be written inside the domain package.
-
 # File names.
     Files should always be named in snakecase.
 
@@ -26,6 +24,10 @@ Package names should always be written in camelcase.
 
 
 # Domain objects.
+    The domain objects should be written inside the domain package.
+    
+    When a domain object is used as a member of another parent object, write it in a directory under the parent's domain object.
+
     The package name of a domain object should be the name of the domain object.
     A domain object consists of an interface and a struct that implements that interface.
 
@@ -48,4 +50,6 @@ Package names should always be written in camelcase.
 
     When combinations of multiple optional members are mandatory, create a separate constructor named create + Name + With + FirstMember + And + SecondMember.
 
-
+# Tests
+    On domain objects, write tests that build objects using the builder.
+    Make sure all optional use-cases are checked.
