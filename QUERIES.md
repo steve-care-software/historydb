@@ -1,6 +1,9 @@
 # Programming language
     Always program code in golang.
 
+# Package names
+Package names should always be written in camelcase.
+
 # File names
     Files should always be named in snakecase.
     When writing an interface, always make sure their names are in camelcase.
@@ -13,6 +16,7 @@
     When there is optional members on an interface, always add a method named Has + its name, and make sure its non-nil or true in its body.  It always returns a boolean.
 
 # Domain objects
+    The package name of a domain object should be the name of the domain object.
     A domain object consists of an interface and a struct that implements that interface.
     The domain interface begins by a capital letter.
     The domain struct begins by a lowercase letter.
@@ -30,3 +34,5 @@
 
 ----
 Create a domain object called Identity, it contains a name, an optional description and a nickname as string.  The description and nickname must be both provided otherwise, none provided. Then create a struct that implements it.
+
+Send me the generated files.
