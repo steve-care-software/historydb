@@ -1,8 +1,14 @@
 Always program code in golang.
 
+Files should always be named in snakecase.
+
 When writing an interface, always make sure their names are in camelcase.
 
-When writing a struct, always make sure the struct that corresponds to an interface has the same name, but in lowercase. Always make sure the constructor is named: "create" with the name of the struct after that.
+The interfaces should always be written in a file called sdk.go
+
+The structs should always be written in other files named by their struct name.
+
+When writing a struct, always make sure the struct that corresponds to an interface has the same name called, but in lowercase. Always make sure the constructor is named: "create" with the name of the struct after that.
 
 When writing methods of the struct, name the current instance obj.
 
@@ -16,6 +22,10 @@ When combinations of multiple optional members are mandatory, create a separate 
 
 The interfaces should always be written in a file called sdk.go.
 
-The struct should always be written in a file called by the name of the struct, in camelcase.
+The struct should always be written in a file called by the name of the struct.
+
+For each struct, create a builder interface called Name + Builder.  It should contain methods called With + name of the property, then pass that property in parameter.  It should contain a method called Create and another one called Now.  Each method of the builder should return an instance of the builder interface, expect the Now method should return an instance of the matched interface.
+
+Always init the builder member to its default values.
 
 Create a interface called Identity, it contains a name, an optional description and a nickname as string.  The description and nickname must be both provided otherwise, none provided. Then create a struct that implements it.
