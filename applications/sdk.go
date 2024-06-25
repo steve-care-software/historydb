@@ -5,6 +5,7 @@ import (
 	"github.com/steve-care-software/historydb/domain/databases/commits"
 	"github.com/steve-care-software/historydb/domain/databases/commits/executions"
 	"github.com/steve-care-software/historydb/domain/databases/commits/executions/chunks"
+	"github.com/steve-care-software/historydb/domain/databases/metadatas"
 	"github.com/steve-care-software/historydb/domain/files"
 	"github.com/steve-care-software/historydb/domain/hash"
 )
@@ -28,6 +29,7 @@ func NewApplication(
 	commitBuilder := commits.NewBuilder()
 	executionsBuilder := executions.NewBuilder()
 	executionBuilder := executions.NewExecutionBuilder()
+	metaDataBuilder := metadatas.NewBuilder()
 	chunkBuilder := chunks.NewBuilder()
 	return createApplication(
 		hashAdapter,
@@ -40,6 +42,7 @@ func NewApplication(
 		commitBuilder,
 		executionsBuilder,
 		executionBuilder,
+		metaDataBuilder,
 		chunkBuilder,
 		chunkBasePath,
 		minSizeToChunkInBytes,
@@ -49,6 +52,7 @@ func NewApplication(
 // Application represents an application
 type Application interface {
 	Begin(path []string) (*uint, error)
+	BeginWithInit(path []string, name string, description string) (*uint, error)
 	Execute(context uint, bytes []byte) error
 	Batch(context uint, bytes [][]byte) error
 	Commit(context uint) error

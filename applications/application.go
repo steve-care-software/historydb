@@ -3,11 +3,13 @@ package applications
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/steve-care-software/historydb/domain/databases"
 	"github.com/steve-care-software/historydb/domain/databases/commits"
 	"github.com/steve-care-software/historydb/domain/databases/commits/executions"
 	"github.com/steve-care-software/historydb/domain/databases/commits/executions/chunks"
+	"github.com/steve-care-software/historydb/domain/databases/metadatas"
 	"github.com/steve-care-software/historydb/domain/files"
 	"github.com/steve-care-software/historydb/domain/hash"
 )
@@ -23,6 +25,7 @@ type application struct {
 	commitBuilder         commits.Builder
 	executionsBuilder     executions.Builder
 	executionBuilder      executions.ExecutionBuilder
+	metaDataBuilder       metadatas.Builder
 	chunkBuilder          chunks.Builder
 	chunkBasePath         []string
 	minSizeToChunkInBytes uint
@@ -41,6 +44,7 @@ func createApplication(
 	commitBuilder commits.Builder,
 	executionsBuilder executions.Builder,
 	executionBuilder executions.ExecutionBuilder,
+	metaDataBuilder metadatas.Builder,
 	chunkBuilder chunks.Builder,
 	chunkBasePath []string,
 	minSizeToChunkInBytes uint,
@@ -56,6 +60,7 @@ func createApplication(
 		commitBuilder:         commitBuilder,
 		executionsBuilder:     executionsBuilder,
 		executionBuilder:      executionBuilder,
+		metaDataBuilder:       metaDataBuilder,
 		chunkBuilder:          chunkBuilder,
 		chunkBasePath:         chunkBasePath,
 		minSizeToChunkInBytes: minSizeToChunkInBytes,
@@ -68,23 +73,59 @@ func createApplication(
 
 // Begin begins a context on a database
 func (app *application) Begin(path []string) (*uint, error) {
+	if !app.repository.Exists(path) {
+		str := fmt.Sprintf("the database (path: %s) does not currently exists and therefore must be initialized using the BeginWithInit method", filepath.Join(path...))
+		return nil, errors.New(str)
+	}
+
+	return app.begin(path, "", "")
+}
+
+// BeginWithInit begins with init
+func (app *application) BeginWithInit(path []string, name string, description string) (*uint, error) {
+	if app.repository.Exists(path) {
+		str := fmt.Sprintf("the database (path: %s) already exists and therefore must NOT be initialized, please use the Begin method directly", filepath.Join(path...))
+		return nil, errors.New(str)
+	}
+
+	return app.begin(path, name, description)
+}
+
+func (app *application) begin(path []string, name string, description string) (*uint, error) {
 	if !app.fileRepository.Exists(path) {
 		err := app.fileService.Init(path)
 		if err != nil {
 			return nil, err
 		}
-
-		err = app.fileService.Lock(path)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	keyname := uint(len(app.contexts))
-	app.contexts[keyname] = contexts{
+	err := app.fileService.Lock(path)
+	if err != nil {
+		return nil, err
+	}
+
+	contextStr := contexts{
 		path:       path,
 		executions: []executionData{},
 	}
+
+	if name != "" && description != "" {
+		metaData, err := app.metaDataBuilder.Create().
+			WithPath(path).
+			WithName(name).
+			WithDescription(description).
+			Now()
+
+		if err != nil {
+			return nil, err
+		}
+
+		contextStr.metaData = metaData
+	}
+
+	keyname := uint(len(app.contexts))
+	app.contexts[keyname] = contextStr
+
 	return &keyname, nil
 }
 
@@ -108,7 +149,11 @@ func (app *application) Execute(context uint, bytes []byte) error {
 			split := app.splitString(fingerStr, splitHashInSubDirAmount)
 			fullDir := append(app.chunkBasePath, split...)
 
-			chk, err := app.chunkBuilder.Create().WithFingerPrint(*pFinger).WithPath(fullDir).Now()
+			chk, err := app.chunkBuilder.Create().
+				WithFingerPrint(*pFinger).
+				WithPath(fullDir).
+				Now()
+
 			if err != nil {
 				return err
 			}
@@ -128,6 +173,8 @@ func (app *application) Execute(context uint, bytes []byte) error {
 
 		newExecution.execution = execution
 		contextIns.executions = append(contextIns.executions, newExecution)
+		app.contexts[context] = contextIns
+		return nil
 	}
 
 	str := fmt.Sprintf(invalidContextErrorPattern, context)
@@ -173,16 +220,21 @@ func (app *application) Commit(context uint) error {
 			return err
 		}
 
-		prevDatabase, err := app.repository.Retrieve(contextIns.path)
-		if err != nil {
-			return err
-		}
+		commitBuilder := app.commitBuilder.Create().
+			WithExecutions(executions)
 
-		commitBuilder := app.commitBuilder.Create().WithExecutions(executions)
-		head := prevDatabase.Head()
-		if head.HasParent() {
-			parent := head.Parent()
-			commitBuilder.WithParent(parent)
+		if app.repository.Exists(contextIns.path) {
+			prevDatabase, err := app.repository.Retrieve(contextIns.path)
+			if err != nil {
+				return err
+			}
+
+			head := prevDatabase.Head()
+			if head.HasParent() {
+				parent := head.Parent()
+				commitBuilder.WithParent(parent)
+			}
+
 		}
 
 		commitIns, err := commitBuilder.Now()
@@ -192,17 +244,20 @@ func (app *application) Commit(context uint) error {
 
 		commitsList := []commits.Commit{}
 		if _, ok := app.commits[context]; ok {
-			commitsList = append(app.commits[context].commits, commitIns)
+			commitsList = app.commits[context].commits
 		}
 
+		commitsList = append(commitsList, commitIns)
 		app.commits[context] = commit{
-			path:    contextIns.path,
-			commits: commitsList,
+			path:     contextIns.path,
+			commits:  commitsList,
+			metaData: contextIns.metaData,
 		}
 
 		app.contexts[context] = contexts{
 			path:       contextIns.path,
 			executions: []executionData{},
+			metaData:   nil,
 		}
 
 		return nil
@@ -222,16 +277,19 @@ func (app *application) Cancel(context uint) {
 // Push pushes updates of a context to its database
 func (app *application) Push(context uint) error {
 	if commitIns, ok := app.commits[context]; ok {
-		database, err := app.repository.Retrieve(commitIns.path)
-		if err != nil {
-			return err
+		if commitIns.metaData == nil {
+			database, err := app.repository.Retrieve(commitIns.path)
+			if err != nil {
+				return err
+			}
+
+			commitIns.metaData = database.MetaData()
 		}
 
 		list := []databases.Database{}
 		for _, oneCommit := range commitIns.commits {
-			metaData := database.MetaData()
 			updatedDatabase, err := app.databaseBuilder.Create().
-				WithMetaData(metaData).
+				WithMetaData(commitIns.metaData).
 				WithHead(oneCommit).
 				Now()
 
@@ -242,12 +300,18 @@ func (app *application) Push(context uint) error {
 			list = append(list, updatedDatabase)
 		}
 
-		err = app.service.SaveAll(list)
+		err := app.service.SaveAll(list)
+		if err != nil {
+			return err
+		}
+
+		err = app.fileService.Unlock(commitIns.metaData.Path())
 		if err != nil {
 			return err
 		}
 
 		delete(app.commits, context)
+		return nil
 	}
 
 	str := fmt.Sprintf(noCommitForContextErrorPattern, context)

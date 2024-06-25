@@ -66,6 +66,7 @@ type Database interface {
 
 // Repository represents a database repository
 type Repository interface {
+	Exists(path []string) bool
 	Retrieve(path []string) (Database, error)
 }
 

@@ -38,7 +38,7 @@ func (app *service) Save(ins Database) error {
 	}
 
 	path := ins.MetaData().Path()
-	return app.fileService.Transact(path, bytes)
+	return app.fileService.Save(path, bytes)
 }
 
 // SaveAll saves all databases

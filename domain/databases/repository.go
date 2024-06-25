@@ -28,6 +28,12 @@ func createRepository(
 	return &out
 }
 
+// Exists returns true if it exists, false otherwise
+func (app *repository) Exists(path []string) bool {
+	_, err := app.Retrieve(path)
+	return err == nil
+}
+
 // Retrieve retrieves a database by path
 func (app *repository) Retrieve(path []string) (Database, error) {
 	bytes, err := app.fileRepository.Retrieve(path)
