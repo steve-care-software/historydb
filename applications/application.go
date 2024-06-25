@@ -25,9 +25,9 @@ type application struct {
 	executionBuilder      executions.ExecutionBuilder
 	chunkBuilder          chunks.Builder
 	chunkBasePath         []string
+	minSizeToChunkInBytes uint
 	commits               map[uint]commit
 	contexts              map[uint]contexts
-	minSizeToChunkInBytes uint
 }
 
 func createApplication(

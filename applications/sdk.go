@@ -1,12 +1,50 @@
 package applications
 
 import (
+	"github.com/steve-care-software/historydb/domain/databases"
+	"github.com/steve-care-software/historydb/domain/databases/commits"
+	"github.com/steve-care-software/historydb/domain/databases/commits/executions"
+	"github.com/steve-care-software/historydb/domain/databases/commits/executions/chunks"
+	"github.com/steve-care-software/historydb/domain/files"
 	"github.com/steve-care-software/historydb/domain/hash"
 )
 
 const invalidContextErrorPattern = "the context, %d, is invalid"
 const noCommitForContextErrorPattern = "there is no commit for the context %d"
 const splitHashInSubDirAmount = 8
+
+// NewApplication creates a new application
+func NewApplication(
+	repository databases.Repository,
+	service databases.Service,
+	commitRepository commits.Repository,
+	fileRepository files.Repository,
+	fileService files.Service,
+	chunkBasePath []string,
+	minSizeToChunkInBytes uint,
+) Application {
+	hashAdapter := hash.NewAdapter()
+	databaseBuilder := databases.NewBuilder()
+	commitBuilder := commits.NewBuilder()
+	executionsBuilder := executions.NewBuilder()
+	executionBuilder := executions.NewExecutionBuilder()
+	chunkBuilder := chunks.NewBuilder()
+	return createApplication(
+		hashAdapter,
+		repository,
+		service,
+		commitRepository,
+		fileRepository,
+		fileService,
+		databaseBuilder,
+		commitBuilder,
+		executionsBuilder,
+		executionBuilder,
+		chunkBuilder,
+		chunkBasePath,
+		minSizeToChunkInBytes,
+	)
+}
 
 // Application represents an application
 type Application interface {
