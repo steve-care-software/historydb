@@ -3,8 +3,35 @@ package databases
 import (
 	"github.com/steve-care-software/historydb/domain/databases/commits"
 	"github.com/steve-care-software/historydb/domain/databases/metadatas"
+	"github.com/steve-care-software/historydb/domain/files"
 	"github.com/steve-care-software/historydb/domain/hash"
 )
+
+// NewRepository creates a new repository
+func NewRepository(
+	fileRepository files.Repository,
+	commitRepository commits.Repository,
+	databaseAdapter Adapter,
+) Repository {
+	databaseBuilder := NewBuilder()
+	return createRepository(
+		fileRepository,
+		commitRepository,
+		databaseAdapter,
+		databaseBuilder,
+	)
+}
+
+// NewService creates a new service
+func NewService(
+	fileService files.Service,
+	databaseAdapter Adapter,
+) Service {
+	return createService(
+		fileService,
+		databaseAdapter,
+	)
+}
 
 // NewBuilder creates a new database builder
 func NewBuilder() Builder {
@@ -17,7 +44,7 @@ func NewBuilder() Builder {
 // Adapter represents a database adapter
 type Adapter interface {
 	ToBytes(ins Database) ([]byte, error)
-	ToInstance(bytes []byte) (Database, error)
+	ToComponents(bytes []byte, path []string) (metadatas.MetaData, hash.Hash, error)
 }
 
 // Builder represents a database builder

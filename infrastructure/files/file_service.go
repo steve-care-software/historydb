@@ -12,15 +12,19 @@ import (
 )
 
 type fileService struct {
-	basePath []string
-	locks    map[string]*fslock.Lock
+	repository files.Repository
+	basePath   []string
+	locks      map[string]*fslock.Lock
 }
 
 func createFileService(
+	repository files.Repository,
 	basePath []string,
 ) files.Service {
 	out := fileService{
-		locks: map[string]*fslock.Lock{},
+		repository: repository,
+		basePath:   basePath,
+		locks:      map[string]*fslock.Lock{},
 	}
 
 	return &out
@@ -69,4 +73,22 @@ func (app *fileService) Unlock(path []string) error {
 func (app *fileService) Save(path []string, bytes []byte) error {
 	filePath := createFilePath(app.basePath, path)
 	return ioutil.WriteFile(filePath, bytes, fs.ModePerm)
+}
+
+// Transact transact bytes to a file
+func (app *fileService) Transact(path []string, bytes []byte) error {
+	if !app.repository.Exists(path) {
+		err := app.Init(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := app.Lock(path)
+	if err != nil {
+		return err
+	}
+
+	defer app.Unlock(path)
+	return app.Save(path, bytes)
 }

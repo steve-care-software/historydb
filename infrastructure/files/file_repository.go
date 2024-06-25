@@ -1,6 +1,9 @@
 package files
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/steve-care-software/historydb/domain/files"
@@ -28,4 +31,15 @@ func (app *fileRepository) Exists(path []string) bool {
 	}
 
 	return true
+}
+
+// Retrieve retrieves bytes by path
+func (app *fileRepository) Retrieve(path []string) ([]byte, error) {
+	filePath := createFilePath(app.basePath, path)
+	if app.Exists(path) {
+		str := fmt.Sprintf("the file (path: %s) does not exists", filePath)
+		return nil, errors.New(str)
+	}
+
+	return ioutil.ReadFile(filePath)
 }
