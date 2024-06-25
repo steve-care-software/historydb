@@ -32,9 +32,9 @@ func createFileService(
 
 // Init initializes a file
 func (app *fileService) Init(path []string) error {
-	filePath := createFilePath(app.basePath, path)
+	filePath := createFilePath(app.basePath, path[0:len(path)-1])
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		err := os.Mkdir(filePath, os.ModeDir)
+		err := os.MkdirAll(filePath, os.ModePerm)
 		if err != nil {
 			return err
 		}
