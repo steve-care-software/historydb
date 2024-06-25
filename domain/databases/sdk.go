@@ -25,10 +25,12 @@ func NewRepository(
 // NewService creates a new service
 func NewService(
 	fileService files.Service,
+	commitService commits.Service,
 	databaseAdapter Adapter,
 ) Service {
 	return createService(
 		fileService,
+		commitService,
 		databaseAdapter,
 	)
 }

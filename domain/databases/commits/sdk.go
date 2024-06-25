@@ -33,3 +33,8 @@ type Commit interface {
 type Repository interface {
 	Retrieve(hash hash.Hash) (Commit, error)
 }
+
+// Service represents the commit service
+type Service interface {
+	Save(ins Commit) error
+}

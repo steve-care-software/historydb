@@ -1,20 +1,24 @@
 package databases
 
 import (
+	"github.com/steve-care-software/historydb/domain/databases/commits"
 	"github.com/steve-care-software/historydb/domain/files"
 )
 
 type service struct {
 	fileService     files.Service
+	commitService   commits.Service
 	databaseAdapter Adapter
 }
 
 func createService(
 	fileService files.Service,
+	commitService commits.Service,
 	databaseAdapter Adapter,
 ) Service {
 	out := service{
 		fileService:     fileService,
+		commitService:   commitService,
 		databaseAdapter: databaseAdapter,
 	}
 
@@ -23,6 +27,11 @@ func createService(
 
 // Save saves a database
 func (app *service) Save(ins Database) error {
+	err := app.commitService.Save(ins.Head())
+	if err != nil {
+		return err
+	}
+
 	bytes, err := app.databaseAdapter.ToBytes(ins)
 	if err != nil {
 		return err
