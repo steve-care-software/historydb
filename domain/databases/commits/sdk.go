@@ -13,6 +13,12 @@ func NewBuilder() Builder {
 	)
 }
 
+// Adapter represents a commit adapter
+type Adapter interface {
+	ToBytes(ins Commit) ([]byte, error)
+	ToInstance(bytes []byte) (Commit, error)
+}
+
 // Builder represents a commit builder
 type Builder interface {
 	Create() Builder
