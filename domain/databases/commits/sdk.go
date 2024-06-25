@@ -2,8 +2,31 @@ package commits
 
 import (
 	"github.com/steve-care-software/historydb/domain/databases/commits/executions"
+	"github.com/steve-care-software/historydb/domain/files"
 	"github.com/steve-care-software/historydb/domain/hash"
 )
+
+// NewRepository creates a new repository
+func NewRepository(
+	adapter Adapter,
+	fileRepository files.Repository,
+) Repository {
+	return createRepository(
+		adapter,
+		fileRepository,
+	)
+}
+
+// NewService creates a new service
+func NewService(
+	adapter Adapter,
+	fileService files.Service,
+) Service {
+	return createService(
+		adapter,
+		fileService,
+	)
+}
 
 // NewBuilder creates a new commit builder
 func NewBuilder() Builder {
