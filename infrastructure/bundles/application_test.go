@@ -1,4 +1,4 @@
-package applications
+package bundles
 
 import (
 	"bytes"
@@ -6,15 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/steve-care-software/historydb/infrastructure/bundles"
-	"github.com/steve-care-software/historydb/infrastructure/files"
 )
 
 type testExecFunc func()
 
-func TestApplication_beginWithInit_Success(t *testing.T) {
-	basePath := []string{
+func TestApplication_Success(t *testing.T) {
+	rootPath := []string{
 		"test_files",
 	}
 
@@ -23,34 +20,20 @@ func TestApplication_beginWithInit_Success(t *testing.T) {
 	}
 
 	defer func() {
-		os.RemoveAll(filepath.Join(basePath...))
+		os.RemoveAll(filepath.Join(rootPath...))
 	}()
 
-	databaseBasePath := append(basePath, "databases", "my_database")
-	commitBasePath := []string{"commits"}
+	basePath := append(rootPath, "databases", "my_database")
+	commitInnerPath := []string{"commits"}
 	chunksInnerPath := []string{"chunks"}
-
-	chunkFileRepository, err := files.NewRepositoryBuilder(chunksInnerPath).Create().WithBasePath(databaseBasePath).Now()
-	if err != nil {
-		panic(err)
-	}
-
-	chunkFileService, err := files.NewServiceBuilder(chunksInnerPath).Create().WithBasePath(databaseBasePath).Now()
-	if err != nil {
-		panic(err)
-	}
-
 	sizeToChunk := uint(1024)
-	splitHashInSize := uint(16)
-	databaseRepository, databaseService, commitRepository, _ := bundles.NewDatabaseRepositoryServiceWithJsonAdapter(databaseBasePath, commitBasePath)
-	application := NewApplication(
-		databaseRepository,
-		databaseService,
-		commitRepository,
-		chunkFileRepository,
-		chunkFileService,
+	splitHashInThisAmount := uint(16)
+	application := NewApplicationWithJSONAdapter(
+		basePath,
+		commitInnerPath,
+		chunksInnerPath,
 		sizeToChunk,
-		splitHashInSize,
+		splitHashInThisAmount,
 	)
 
 	executions := []testExecFunc{
@@ -369,7 +352,7 @@ func TestApplication_beginWithInit_Success(t *testing.T) {
 
 	for _, oneExecutionFn := range executions {
 		oneExecutionFn()
-		os.RemoveAll(filepath.Join(basePath...))
+		os.RemoveAll(filepath.Join(rootPath...))
 	}
 
 }

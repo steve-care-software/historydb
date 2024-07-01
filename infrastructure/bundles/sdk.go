@@ -1,11 +1,42 @@
 package bundles
 
 import (
+	"github.com/steve-care-software/historydb/applications"
 	"github.com/steve-care-software/historydb/domain/databases"
 	"github.com/steve-care-software/historydb/domain/databases/commits"
 	"github.com/steve-care-software/historydb/infrastructure/files"
 	"github.com/steve-care-software/historydb/infrastructure/jsons"
 )
+
+// NewApplicationWithJSONAdapter creates a new application with json adapter
+func NewApplicationWithJSONAdapter(
+	basePath []string,
+	commitInnerPath []string,
+	chunksInnerPath []string,
+	sizeToChunk uint,
+	splitHashInThisAmount uint,
+) applications.Application {
+	chunkFileRepository, err := files.NewRepositoryBuilder(chunksInnerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		panic(err)
+	}
+
+	chunkFileService, err := files.NewServiceBuilder(chunksInnerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		panic(err)
+	}
+
+	databaseRepository, databaseService, commitRepository, _ := NewDatabaseRepositoryServiceWithJsonAdapter(basePath, commitInnerPath)
+	return applications.NewApplication(
+		databaseRepository,
+		databaseService,
+		commitRepository,
+		chunkFileRepository,
+		chunkFileService,
+		sizeToChunk,
+		splitHashInThisAmount,
+	)
+}
 
 // NewCommitRepositoryServiceWithJsonAdapter creates a new commit repository and service with json adapter
 func NewCommitRepositoryServiceWithJsonAdapter(
