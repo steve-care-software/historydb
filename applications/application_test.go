@@ -307,6 +307,64 @@ func TestApplication_beginWithInit_Success(t *testing.T) {
 				return
 			}
 		},
+		// begin, batch, commit, push
+		func() {
+			expectedChunk := []byte{}
+			amount := int(sizeToChunk * 2)
+			for i := 0; i < amount; i++ {
+				expectedChunk = append(expectedChunk, byte(rand.Intn(255)))
+			}
+
+			secondBytes := []byte("this is some bytes")
+
+			name := "this is a name"
+			description := "this is a descriptioon"
+			pContext, err := application.BeginWithInit(path, name, description)
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			err = application.Batch(*pContext, [][]byte{
+				expectedChunk,
+				secondBytes,
+			})
+
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			err = application.Commit(*pContext)
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			err = application.Push(*pContext)
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			retDatabase, err := application.Retrieve(path)
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			retCommit, err := application.RetrieveCommit(retDatabase.Head().Hash())
+			if err != nil {
+				t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+				return
+			}
+
+			list := retCommit.Executions().List()
+			if len(list) != 2 {
+				t.Errorf("the executions was expected to contain %d elements, %d returned", 2, len(list))
+				return
+			}
+		},
 	}
 
 	for _, oneExecutionFn := range executions {
