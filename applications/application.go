@@ -15,21 +15,22 @@ import (
 )
 
 type application struct {
-	hashAdapter           hash.Adapter
-	repository            databases.Repository
-	service               databases.Service
-	commitRepository      commits.Repository
-	chunkFileRepository   files.Repository
-	chunkFileService      files.Service
-	databaseBuilder       databases.Builder
-	commitBuilder         commits.Builder
-	executionsBuilder     executions.Builder
-	executionBuilder      executions.ExecutionBuilder
-	metaDataBuilder       metadatas.Builder
-	chunkBuilder          chunks.Builder
-	minSizeToChunkInBytes uint
-	commits               map[uint]commit
-	contexts              map[uint]contexts
+	hashAdapter             hash.Adapter
+	repository              databases.Repository
+	service                 databases.Service
+	commitRepository        commits.Repository
+	chunkFileRepository     files.Repository
+	chunkFileService        files.Service
+	databaseBuilder         databases.Builder
+	commitBuilder           commits.Builder
+	executionsBuilder       executions.Builder
+	executionBuilder        executions.ExecutionBuilder
+	metaDataBuilder         metadatas.Builder
+	chunkBuilder            chunks.Builder
+	minSizeToChunkInBytes   uint
+	splitHashInSubDirAmount uint
+	commits                 map[uint]commit
+	contexts                map[uint]contexts
 }
 
 func createApplication(
@@ -46,23 +47,25 @@ func createApplication(
 	metaDataBuilder metadatas.Builder,
 	chunkBuilder chunks.Builder,
 	minSizeToChunkInBytes uint,
+	splitHashInSubDirAmount uint,
 ) Application {
 	out := application{
-		hashAdapter:           hashAdapter,
-		repository:            repository,
-		service:               service,
-		commitRepository:      commitRepository,
-		chunkFileRepository:   chunkFileRepository,
-		chunkFileService:      chunkFileService,
-		databaseBuilder:       databaseBuilder,
-		commitBuilder:         commitBuilder,
-		executionsBuilder:     executionsBuilder,
-		executionBuilder:      executionBuilder,
-		metaDataBuilder:       metaDataBuilder,
-		chunkBuilder:          chunkBuilder,
-		minSizeToChunkInBytes: minSizeToChunkInBytes,
-		commits:               map[uint]commit{},
-		contexts:              map[uint]contexts{},
+		hashAdapter:             hashAdapter,
+		repository:              repository,
+		service:                 service,
+		commitRepository:        commitRepository,
+		chunkFileRepository:     chunkFileRepository,
+		chunkFileService:        chunkFileService,
+		databaseBuilder:         databaseBuilder,
+		commitBuilder:           commitBuilder,
+		executionsBuilder:       executionsBuilder,
+		executionBuilder:        executionBuilder,
+		metaDataBuilder:         metaDataBuilder,
+		chunkBuilder:            chunkBuilder,
+		minSizeToChunkInBytes:   minSizeToChunkInBytes,
+		splitHashInSubDirAmount: splitHashInSubDirAmount,
+		commits:                 map[uint]commit{},
+		contexts:                map[uint]contexts{},
 	}
 
 	return &out
@@ -80,7 +83,7 @@ func (app *application) RetrieveCommit(commitHash hash.Hash) (commits.Commit, er
 
 // RetrieveChunkBytes retrieves chunk bytes
 func (app *application) RetrieveChunkBytes(fingerHash hash.Hash) ([]byte, error) {
-	split := app.splitString(fingerHash.String(), splitHashInSubDirAmount)
+	split := app.splitString(fingerHash.String())
 	return app.chunkFileRepository.Retrieve(split)
 }
 
@@ -152,7 +155,7 @@ func (app *application) Execute(context uint, bytes []byte) error {
 			}
 
 			fingerStr := pFinger.String()
-			split := app.splitString(fingerStr, splitHashInSubDirAmount)
+			split := app.splitString(fingerStr)
 			chk, err := app.chunkBuilder.Create().
 				WithFingerPrint(*pFinger).
 				WithPath(split).
@@ -205,8 +208,14 @@ func (app *application) Commit(context uint) error {
 		for _, oneExecutionData := range contextIns.executions {
 			executionsList = append(executionsList, oneExecutionData.execution)
 			if oneExecutionData.execution.IsChunk() {
-				err := app.chunkFileService.Save(
-					oneExecutionData.execution.Chunk().Path(),
+				chkPath := oneExecutionData.execution.Chunk().Path()
+				err := app.chunkFileService.Init(chkPath)
+				if err != nil {
+					return err
+				}
+
+				err = app.chunkFileService.Save(
+					chkPath,
 					oneExecutionData.bytes,
 				)
 
@@ -274,6 +283,12 @@ func (app *application) Commit(context uint) error {
 
 // Cancel executes a cancel on a context
 func (app *application) Cancel(context uint) {
+	if contextIns, ok := app.contexts[context]; ok {
+		err := app.service.End(contextIns.path)
+		if err != nil {
+			return
+		}
+	}
 	delete(app.contexts, context)
 	delete(app.commits, context)
 }
@@ -385,13 +400,14 @@ func (app *application) RollbackToState(context uint, headCommit hash.Hash) erro
 	return errors.New(str)
 }
 
-func (app *application) splitString(str string, size int) []string {
+func (app *application) splitString(str string) []string {
 	var parts []string
-	partSize := len(str) / size
-	for i := 0; i < size; i++ {
+	castedSize := int(app.splitHashInSubDirAmount)
+	partSize := len(str) / castedSize
+	for i := 0; i < castedSize; i++ {
 		start := i * partSize
 		end := start + partSize
-		if i == size-1 {
+		if i == castedSize-1 {
 			end = len(str)
 		}
 		parts = append(parts, str[start:end])

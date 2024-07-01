@@ -12,7 +12,6 @@ import (
 
 const invalidContextErrorPattern = "the context, %d, is invalid"
 const noCommitForContextErrorPattern = "there is no commit for the context %d"
-const splitHashInSubDirAmount = 8
 
 // NewApplication creates a new application
 func NewApplication(
@@ -22,6 +21,7 @@ func NewApplication(
 	chunkFileRepository files.Repository,
 	chunkFileService files.Service,
 	minSizeToChunkInBytes uint,
+	splitHashInSubDirAmount uint,
 ) Application {
 	hashAdapter := hash.NewAdapter()
 	databaseBuilder := databases.NewBuilder()
@@ -44,6 +44,7 @@ func NewApplication(
 		metaDataBuilder,
 		chunkBuilder,
 		minSizeToChunkInBytes,
+		splitHashInSubDirAmount,
 	)
 }
 
