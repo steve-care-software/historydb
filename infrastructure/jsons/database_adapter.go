@@ -28,7 +28,7 @@ func createDatabaseAdapter(
 // ToBytes converts instance to bytes
 func (app *databaseAdapter) ToBytes(ins databases.Database) ([]byte, error) {
 	metaDataIns := ins.MetaData()
-	return json.Marshal(database{
+	return json.Marshal(Database{
 		Head: ins.Head().Hash().String(),
 		MetaData: metaData{
 			Name:        metaDataIns.Name(),
@@ -39,7 +39,7 @@ func (app *databaseAdapter) ToBytes(ins databases.Database) ([]byte, error) {
 
 // ToComponents bytes to components
 func (app *databaseAdapter) ToComponents(bytes []byte, path []string) (metadatas.MetaData, hash.Hash, error) {
-	ptr := new(database)
+	ptr := new(Database)
 	err := json.Unmarshal(bytes, ptr)
 	if err != nil {
 		return nil, nil, err

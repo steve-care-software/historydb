@@ -1,6 +1,7 @@
 package jsons
 
-type database struct {
+// Database represents a database
+type Database struct {
 	Head     string   `json:"head"`
 	MetaData metaData `json:"meta_data"`
 }
