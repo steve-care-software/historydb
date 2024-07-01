@@ -3,16 +3,16 @@ HistoryDB is a database system that records the tree of data recording in a data
 
 ## Create JSON application
 ```go
-    basePath := []string{"databases", "my_database"}
-	commitInnerPath := []string{"commits"}
-	chunksInnerPath := []string{"chunks"}
-	sizeToChunk := uint(1024)
-	splitHashInThisAmount := uint(16)
-	application := bundles.NewApplicationWithJSONAdapter(
-		basePath,
-		commitInnerPath,
-		chunksInnerPath,
-		sizeToChunk,
-		splitHashInThisAmount,
-	)
+basePath := []string{"databases", "my_database"}
+commitInnerPath := []string{"commits"}
+chunksInnerPath := []string{"chunks"}
+sizeToChunk := uint(1024)
+splitHashInThisAmount := uint(16)
+application := bundles.NewApplicationWithJSONAdapter(
+    basePath,
+	commitInnerPath,
+	chunksInnerPath,
+	sizeToChunk,
+	splitHashInThisAmount,
+)
 ```
