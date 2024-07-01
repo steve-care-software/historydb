@@ -58,9 +58,23 @@ type Commit interface {
 	Parent() hash.Hash
 }
 
+// RepositoryBuilder represents a repository builder
+type RepositoryBuilder interface {
+	Create() RepositoryBuilder
+	WithBasePath(basePath []string) RepositoryBuilder
+	Now() (Repository, error)
+}
+
 // Repository represents a commit repository
 type Repository interface {
 	Retrieve(hash hash.Hash) (Commit, error)
+}
+
+// ServiceBuilder represents a service builder
+type ServiceBuilder interface {
+	Create() ServiceBuilder
+	WithBasePath(basePath []string) ServiceBuilder
+	Now() (Service, error)
 }
 
 // Service represents the commit service

@@ -24,11 +24,13 @@ func NewRepository(
 
 // NewService creates a new service
 func NewService(
+	repository Repository,
 	fileService files.Service,
 	commitService commits.Service,
 	databaseAdapter Adapter,
 ) Service {
 	return createService(
+		repository,
 		fileService,
 		commitService,
 		databaseAdapter,
@@ -72,6 +74,8 @@ type Repository interface {
 
 // Service represents a database service
 type Service interface {
+	Begin(path []string) error
 	Save(database Database) error
 	SaveAll(list []Database) error
+	End(path []string) error
 }

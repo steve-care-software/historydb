@@ -29,7 +29,7 @@ func createDatabaseAdapter(
 func (app *databaseAdapter) ToBytes(ins databases.Database) ([]byte, error) {
 	metaDataIns := ins.MetaData()
 	return json.Marshal(database{
-		Head: ins.Hash().String(),
+		Head: ins.Head().Hash().String(),
 		MetaData: metaData{
 			Name:        metaDataIns.Name(),
 			Description: metaDataIns.Description(),

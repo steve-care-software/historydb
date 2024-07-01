@@ -12,8 +12,12 @@ func TestTransactManually_Success(t *testing.T) {
 		"test_files",
 	}
 
+	innerPath := []string{
+		"inner_dir",
+	}
+
 	path := []string{
-		"some_dir",
+		"path_dir",
 		"myFile.data",
 	}
 
@@ -23,15 +27,24 @@ func TestTransactManually_Success(t *testing.T) {
 		os.RemoveAll(filepath.Join(basePath...))
 	}()
 
-	repository := NewRepsoitory(basePath)
-	service := NewService(repository, basePath)
+	repository, err := NewRepositoryBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
+
+	service, err := NewServiceBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
 
 	if repository.Exists(path) {
 		t.Errorf("the path: %s, was expected to NOT exists", filepath.Join(path...))
 		return
 	}
 
-	err := service.Save(path, expectedBytes)
+	err = service.Save(path, expectedBytes)
 	if err == nil {
 		t.Errorf("the error was expected to be valid, nil returned")
 		return
@@ -71,8 +84,12 @@ func TestTransact_Success(t *testing.T) {
 		"test_files",
 	}
 
+	innerPath := []string{
+		"inner_dir",
+	}
+
 	path := []string{
-		"some_dir",
+		"path_dir",
 		"myFile.data",
 	}
 
@@ -82,15 +99,24 @@ func TestTransact_Success(t *testing.T) {
 		os.RemoveAll(filepath.Join(basePath...))
 	}()
 
-	repository := NewRepsoitory(basePath)
-	service := NewService(repository, basePath)
+	repository, err := NewRepositoryBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
+
+	service, err := NewServiceBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
 
 	if repository.Exists(path) {
 		t.Errorf("the path: %s, was expected to NOT exists", filepath.Join(path...))
 		return
 	}
 
-	err := service.Transact(path, expectedBytes)
+	err = service.Transact(path, expectedBytes)
 	if err != nil {
 		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
 		return
@@ -135,8 +161,12 @@ func TestTransact_tryLockTwice_returnsError(t *testing.T) {
 		"test_files",
 	}
 
+	innerPath := []string{
+		"inner_dir",
+	}
+
 	path := []string{
-		"some_dir",
+		"path_dir",
 		"myFile.data",
 	}
 
@@ -144,10 +174,13 @@ func TestTransact_tryLockTwice_returnsError(t *testing.T) {
 		os.RemoveAll(filepath.Join(basePath...))
 	}()
 
-	repository := NewRepsoitory(basePath)
-	service := NewService(repository, basePath)
+	service, err := NewServiceBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
 
-	err := service.Init(path)
+	err = service.Init(path)
 	if err != nil {
 		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
 		return
@@ -171,8 +204,12 @@ func TestTransact_unlockAnNonLockFile_returnsError(t *testing.T) {
 		"test_files",
 	}
 
+	innerPath := []string{
+		"inner_dir",
+	}
+
 	path := []string{
-		"some_dir",
+		"path_dir",
 		"myFile.data",
 	}
 
@@ -180,10 +217,13 @@ func TestTransact_unlockAnNonLockFile_returnsError(t *testing.T) {
 		os.RemoveAll(filepath.Join(basePath...))
 	}()
 
-	repository := NewRepsoitory(basePath)
-	service := NewService(repository, basePath)
+	service, err := NewServiceBuilder(innerPath).Create().WithBasePath(basePath).Now()
+	if err != nil {
+		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
+		return
+	}
 
-	err := service.Init(path)
+	err = service.Init(path)
 	if err != nil {
 		t.Errorf("the error was expected to be nil, error returned: %s", err.Error())
 		return

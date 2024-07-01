@@ -19,15 +19,14 @@ type application struct {
 	repository            databases.Repository
 	service               databases.Service
 	commitRepository      commits.Repository
-	fileRepository        files.Repository
-	fileService           files.Service
+	chunkFileRepository   files.Repository
+	chunkFileService      files.Service
 	databaseBuilder       databases.Builder
 	commitBuilder         commits.Builder
 	executionsBuilder     executions.Builder
 	executionBuilder      executions.ExecutionBuilder
 	metaDataBuilder       metadatas.Builder
 	chunkBuilder          chunks.Builder
-	chunkBasePath         []string
 	minSizeToChunkInBytes uint
 	commits               map[uint]commit
 	contexts              map[uint]contexts
@@ -38,15 +37,14 @@ func createApplication(
 	repository databases.Repository,
 	service databases.Service,
 	commitRepository commits.Repository,
-	fileRepository files.Repository,
-	fileService files.Service,
+	chunkFileRepository files.Repository,
+	chunkFileService files.Service,
 	databaseBuilder databases.Builder,
 	commitBuilder commits.Builder,
 	executionsBuilder executions.Builder,
 	executionBuilder executions.ExecutionBuilder,
 	metaDataBuilder metadatas.Builder,
 	chunkBuilder chunks.Builder,
-	chunkBasePath []string,
 	minSizeToChunkInBytes uint,
 ) Application {
 	out := application{
@@ -54,21 +52,36 @@ func createApplication(
 		repository:            repository,
 		service:               service,
 		commitRepository:      commitRepository,
-		fileRepository:        fileRepository,
-		fileService:           fileService,
+		chunkFileRepository:   chunkFileRepository,
+		chunkFileService:      chunkFileService,
 		databaseBuilder:       databaseBuilder,
 		commitBuilder:         commitBuilder,
 		executionsBuilder:     executionsBuilder,
 		executionBuilder:      executionBuilder,
 		metaDataBuilder:       metaDataBuilder,
 		chunkBuilder:          chunkBuilder,
-		chunkBasePath:         chunkBasePath,
 		minSizeToChunkInBytes: minSizeToChunkInBytes,
 		commits:               map[uint]commit{},
 		contexts:              map[uint]contexts{},
 	}
 
 	return &out
+}
+
+// Retrieve retrieves a database by path
+func (app *application) Retrieve(path []string) (databases.Database, error) {
+	return app.repository.Retrieve(path)
+}
+
+// RetrieveCommit retrieves a commit by hash
+func (app *application) RetrieveCommit(commitHash hash.Hash) (commits.Commit, error) {
+	return app.commitRepository.Retrieve(commitHash)
+}
+
+// RetrieveChunkBytes retrieves chunk bytes
+func (app *application) RetrieveChunkBytes(fingerHash hash.Hash) ([]byte, error) {
+	split := app.splitString(fingerHash.String(), splitHashInSubDirAmount)
+	return app.chunkFileRepository.Retrieve(split)
 }
 
 // Begin begins a context on a database
@@ -92,14 +105,7 @@ func (app *application) BeginWithInit(path []string, name string, description st
 }
 
 func (app *application) begin(path []string, name string, description string) (*uint, error) {
-	if !app.fileRepository.Exists(path) {
-		err := app.fileService.Init(path)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err := app.fileService.Lock(path)
+	err := app.service.Begin(path)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +153,9 @@ func (app *application) Execute(context uint, bytes []byte) error {
 
 			fingerStr := pFinger.String()
 			split := app.splitString(fingerStr, splitHashInSubDirAmount)
-			fullDir := append(app.chunkBasePath, split...)
-
 			chk, err := app.chunkBuilder.Create().
 				WithFingerPrint(*pFinger).
-				WithPath(fullDir).
+				WithPath(split).
 				Now()
 
 			if err != nil {
@@ -201,7 +205,7 @@ func (app *application) Commit(context uint) error {
 		for _, oneExecutionData := range contextIns.executions {
 			executionsList = append(executionsList, oneExecutionData.execution)
 			if oneExecutionData.execution.IsChunk() {
-				err := app.fileService.Save(
+				err := app.chunkFileService.Save(
 					oneExecutionData.execution.Chunk().Path(),
 					oneExecutionData.bytes,
 				)
@@ -305,7 +309,7 @@ func (app *application) Push(context uint) error {
 			return err
 		}
 
-		err = app.fileService.Unlock(commitIns.metaData.Path())
+		err = app.service.End(commitIns.metaData.Path())
 		if err != nil {
 			return err
 		}

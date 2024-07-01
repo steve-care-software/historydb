@@ -2,22 +2,21 @@ package files
 
 import "github.com/steve-care-software/historydb/domain/files"
 
-// NewRepsoitory creates a new reposiotry
-func NewRepsoitory(
-	basePath []string,
-) files.Repository {
-	return createFileRepository(
-		basePath,
+// NewRepositoryBuilder creates a new repository builder
+func NewRepositoryBuilder(
+	innerPath []string,
+) files.RepositoryBuilder {
+	return createFileRepositoryBuilder(
+		innerPath,
 	)
 }
 
-// NewService creates a new service
-func NewService(
-	repository files.Repository,
-	basePath []string,
-) files.Service {
-	return createFileService(
-		repository,
-		basePath,
+// NewServiceBuilder creates a new service builder
+func NewServiceBuilder(
+	innerPath []string,
+) files.ServiceBuilder {
+	return createFileServiceBuilder(
+		NewRepositoryBuilder(innerPath),
+		innerPath,
 	)
 }

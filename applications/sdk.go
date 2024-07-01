@@ -19,9 +19,8 @@ func NewApplication(
 	repository databases.Repository,
 	service databases.Service,
 	commitRepository commits.Repository,
-	fileRepository files.Repository,
-	fileService files.Service,
-	chunkBasePath []string,
+	chunkFileRepository files.Repository,
+	chunkFileService files.Service,
 	minSizeToChunkInBytes uint,
 ) Application {
 	hashAdapter := hash.NewAdapter()
@@ -36,21 +35,23 @@ func NewApplication(
 		repository,
 		service,
 		commitRepository,
-		fileRepository,
-		fileService,
+		chunkFileRepository,
+		chunkFileService,
 		databaseBuilder,
 		commitBuilder,
 		executionsBuilder,
 		executionBuilder,
 		metaDataBuilder,
 		chunkBuilder,
-		chunkBasePath,
 		minSizeToChunkInBytes,
 	)
 }
 
 // Application represents an application
 type Application interface {
+	Retrieve(path []string) (databases.Database, error)
+	RetrieveCommit(commitHash hash.Hash) (commits.Commit, error)
+	RetrieveChunkBytes(fingerHash hash.Hash) ([]byte, error)
 	Begin(path []string) (*uint, error)
 	BeginWithInit(path []string, name string, description string) (*uint, error)
 	Execute(context uint, bytes []byte) error

@@ -6,23 +6,42 @@ import (
 )
 
 type service struct {
+	repository      Repository
 	fileService     files.Service
 	commitService   commits.Service
 	databaseAdapter Adapter
 }
 
 func createService(
+	repository Repository,
 	fileService files.Service,
 	commitService commits.Service,
 	databaseAdapter Adapter,
 ) Service {
 	out := service{
+		repository:      repository,
 		fileService:     fileService,
 		commitService:   commitService,
 		databaseAdapter: databaseAdapter,
 	}
 
 	return &out
+}
+
+// Begin begins a transaction
+func (app *service) Begin(path []string) error {
+	if !app.repository.Exists(path) {
+		err := app.fileService.Init(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := app.fileService.Lock(path)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Save saves a database
@@ -51,4 +70,9 @@ func (app *service) SaveAll(list []Database) error {
 	}
 
 	return nil
+}
+
+// End ends a transaction
+func (app *service) End(path []string) error {
+	return app.fileService.Unlock(path)
 }
