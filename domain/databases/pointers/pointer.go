@@ -9,17 +9,20 @@ type pointer struct {
 	hash     hash.Hash
 	head     hash.Hash
 	metaData metadatas.MetaData
+	path     []string
 }
 
 func createPointer(
 	hash hash.Hash,
 	head hash.Hash,
 	metaData metadatas.MetaData,
+	path []string,
 ) Pointer {
 	out := pointer{
 		hash:     hash,
 		head:     head,
 		metaData: metaData,
+		path:     path,
 	}
 
 	return &out
@@ -38,4 +41,9 @@ func (obj *pointer) Head() hash.Hash {
 // MetaData returns the metaData
 func (obj *pointer) MetaData() metadatas.MetaData {
 	return obj.metaData
+}
+
+// Path returns the path
+func (obj *pointer) Path() []string {
+	return obj.path
 }

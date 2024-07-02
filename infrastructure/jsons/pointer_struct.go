@@ -4,4 +4,5 @@ package jsons
 type Pointer struct {
 	Head     string   `json:"head"`
 	MetaData MetaData `json:"meta_data"`
+	Path     []string `json:"path"`
 }

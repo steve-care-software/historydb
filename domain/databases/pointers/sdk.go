@@ -24,6 +24,7 @@ type Builder interface {
 	Create() Builder
 	WithHead(head hash.Hash) Builder
 	WithMetaData(metaData metadatas.MetaData) Builder
+	WithPath(path []string) Builder
 	Now() (Pointer, error)
 }
 
@@ -32,4 +33,5 @@ type Pointer interface {
 	Hash() hash.Hash
 	Head() hash.Hash
 	MetaData() metadatas.MetaData
+	Path() []string
 }
